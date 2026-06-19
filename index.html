@@ -7,13 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-    <script>
-        if (!/Android/i.test(navigator.userAgent || '')) {
-            document.write('<script src="https://unpkg.com/three@0.149.0/build/three.min.js"><\/script>');
-            document.write('<script src="https://unpkg.com/force-graph"><\/script>');
-        }
-    </script>
-    <link href="style/style.css?v=android-normal-3" rel="stylesheet">
+    <script defer src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
+    <script defer src="https://unpkg.com/force-graph"></script>
+    <link href="style/style.css" rel="stylesheet">
 </head>
 <body>
     <canvas id="neural-bg" aria-hidden="true"></canvas>
@@ -25,7 +21,7 @@
 
     <header class="main-header">
         <span class="eyebrow">INTERACTIVE MINDSPACE</span>
-        <h1>BEYNİMİN HARİTASI</h1>
+        <h1>BEYNİMİN<br>HARİTASI</h1>
         <p>Düğümleri sürükleyin, yakınlaşın ve her noktada başka bir hikaye açın.</p>
     </header>
 
@@ -44,6 +40,7 @@
                 </div>
             </div>
             <div class="desc-container">
+                <img id="panel-showcase" class="panel-showcase" src="" alt="" />
                 <p id="node-desc">Detayları görmek için haritadan bir düğüme tıklayın.</p>
             </div>
             <div class="panel-footer">
@@ -60,6 +57,6 @@
 
     <button id="open-panel-btn" class="hint-button">Haritayı İncele</button>
 
-    <script src="script/app.js?v=android-normal-3"></script>
+    <script defer src="script/app.js"></script>
 </body>
 </html>
