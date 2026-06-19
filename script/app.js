@@ -291,7 +291,7 @@ function initNeuralBackground() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    const particleCount = window.innerWidth < 768 ? 420 : 780;
+    const particleCount = window.innerWidth < 50 ? 50 : 50;
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
     const palette = [
