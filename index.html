@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zihin Haritası Portfolyo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/force-graph"></script>
+    <link href="style/style.css" rel="stylesheet">
+</head>
+<body>
+    <canvas id="neural-bg" aria-hidden="true"></canvas>
+    <div class="scene-vignette" aria-hidden="true"></div>
+    <div id="cosmic-cursor" aria-hidden="true">
+        <span class="cursor-flame"></span>
+        <span class="cursor-ship"></span>
+    </div>
+
+    <header class="main-header">
+        <span class="eyebrow">INTERACTIVE MINDSPACE</span>
+        <h1>BEYNİMİN<br>HARİTASI</h1>
+        <p>Düğümleri sürükleyin, yakınlaşın ve her noktada başka bir hikaye açın.</p>
+    </header>
+
+    <div id="graph-container"></div>
+
+    <div id="detail-panel" class="panel">
+        <button id="close-btn" class="close-button">&times;</button>
+        <div class="panel-content">
+            <div class="panel-top">
+                <div id="panel-avatar-wrap" class="panel-avatar-wrap">
+                    <img id="panel-avatar" src="" alt="" />
+                </div>
+                <div class="panel-meta">
+                    <span id="node-group" class="badge">KATEGORİ</span>
+                    <h2 id="node-name">Düğüm Adı</h2>
+                </div>
+            </div>
+            <div class="desc-container">
+                <img id="panel-showcase" class="panel-showcase" src="" alt="" />
+                <p id="node-desc">Detayları görmek için haritadan bir düğüme tıklayın.</p>
+            </div>
+            <div class="panel-footer">
+                Keşfetmek için farklı bir noktaya dokunun.
+            </div>
+        </div>
+    </div>
+
+    <div class="hud-strip" aria-hidden="true">
+        <span>LIVE NODES</span>
+        <strong>15</strong>
+        <span>ENERGY FLOW</span>
+    </div>
+
+    <button id="open-panel-btn" class="hint-button">Haritayı İncele</button>
+
+    <script src="script/app.js"></script>
+</body>
+</html>
