@@ -180,28 +180,16 @@ body::before {
 .main-header h1 {
     position: relative;
     z-index: 1;
-    width: min-content;
-    max-width: 350px;
-    font-size: clamp(2rem, 4vw, 3.85rem);
+    max-width: 720px;
+    font-size: clamp(2.35rem, 7vw, 6.9rem);
     font-weight: 800;
-    line-height: 0.92;
+    line-height: 0.88;
     letter-spacing: 0;
     background: linear-gradient(105deg, #ffffff 0%, #a7f3d0 28%, #38bdf8 58%, #fb7185 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     filter: drop-shadow(0 18px 42px rgba(34, 211, 238, 0.28));
     pointer-events: auto;
-}
-
-.main-header h1::after {
-    content: "";
-    display: block;
-    width: min(260px, 58vw);
-    height: 3px;
-    margin-top: 14px;
-    border-radius: 999px;
-    background: linear-gradient(90deg, var(--green), var(--cyan), transparent);
-    box-shadow: 0 0 22px rgba(34, 211, 238, 0.46);
 }
 
 .main-header p {
@@ -308,7 +296,7 @@ body::before {
     border: 3px solid rgba(34, 211, 238, 0.58);
     background: rgba(15, 23, 42, 0.78);
     box-shadow: 0 0 30px rgba(34, 211, 238, 0.26);
-    animation: avatarFloat 7s ease-in-out infinite;
+    animation: avatarFloat 3.8s ease-in-out infinite;
 }
 
 .panel-avatar-wrap::after {
@@ -317,7 +305,7 @@ body::before {
     inset: -8px;
     border-radius: inherit;
     border: 1px solid rgba(255, 255, 255, 0.22);
-    animation: avatarOrbit 9s linear infinite;
+    animation: avatarOrbit 3.4s linear infinite;
 }
 
 .panel-avatar-wrap::before {
@@ -341,7 +329,7 @@ body::before {
     object-fit: cover;
     display: block;
     transform: scale(1.08);
-    animation: avatarImageDrift 14s ease-in-out infinite;
+    animation: avatarImageDrift 7s ease-in-out infinite;
 }
 
 .panel-avatar-wrap.is-center {
@@ -398,22 +386,6 @@ body::before {
     color: #d6e0ee;
     font-size: 1rem;
     line-height: 1.8;
-}
-
-.panel-showcase {
-    position: relative;
-    z-index: 1;
-    display: none;
-    width: 100%;
-    max-height: 220px;
-    margin-bottom: 20px;
-    object-fit: cover;
-    border-radius: 8px;
-    border: 1px solid rgba(226, 232, 240, 0.16);
-    box-shadow:
-        0 18px 42px rgba(0, 0, 0, 0.36),
-        0 0 32px rgba(34, 211, 238, 0.16);
-    filter: saturate(1.12) contrast(1.04);
 }
 
 .panel-footer {
@@ -478,13 +450,14 @@ body::before {
 }
 
 @keyframes avatarOrbit {
-    from { transform: rotate(0deg) scale(0.92); opacity: 0.34; }
-    to { transform: rotate(360deg) scale(0.92); opacity: 0.34; }
+    from { transform: rotate(0deg) scale(0.92); opacity: 0.22; }
+    50% { opacity: 0.62; }
+    to { transform: rotate(360deg) scale(0.92); opacity: 0.22; }
 }
 
 @keyframes avatarFloat {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-3px); }
+    50% { transform: translateY(-5px); }
 }
 
 @keyframes avatarScan {
@@ -494,8 +467,8 @@ body::before {
 }
 
 @keyframes avatarImageDrift {
-    0%, 100% { transform: scale(1.08) rotate(-0.6deg); filter: saturate(1.16) contrast(1.08); }
-    50% { transform: scale(1.08) rotate(0.6deg); filter: saturate(1.16) contrast(1.08); }
+    0%, 100% { transform: scale(1.08) rotate(-1deg); filter: saturate(1.1) contrast(1.06); }
+    50% { transform: scale(1.15) rotate(1deg); filter: saturate(1.35) contrast(1.12); }
 }
 
 @keyframes gridDrift {
@@ -519,14 +492,50 @@ body::before {
     }
 }
 
+html.android-optimized body::before {
+    animation: none;
+    opacity: 0.55;
+}
+
+html.android-optimized #graph-container {
+    mix-blend-mode: normal;
+}
+
+html.android-optimized .main-header h1 {
+    filter: drop-shadow(0 10px 24px rgba(34, 211, 238, 0.2));
+}
+
+html.android-optimized .panel {
+    backdrop-filter: blur(10px) saturate(115%);
+    -webkit-backdrop-filter: blur(10px) saturate(115%);
+    box-shadow:
+        0 18px 46px rgba(0, 0, 0, 0.54),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    transition:
+        transform 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+        opacity 0.28s ease;
+}
+
+html.android-optimized .panel-avatar-wrap,
+html.android-optimized .panel-avatar-wrap::after,
+html.android-optimized .panel-avatar-wrap::before,
+html.android-optimized .panel-avatar-wrap img,
+html.android-optimized .eyebrow::before {
+    animation-duration: 6s;
+}
+
+html.android-optimized .hint-button,
+html.android-optimized .close-button {
+    transition-duration: 0.14s;
+}
+
 @media (max-width: 768px) {
     .main-header {
         padding: 20px;
     }
 
     .main-header h1 {
-        max-width: 340px;
-        font-size: clamp(1.8rem, 9vw, 2.85rem);
+        max-width: 92vw;
     }
 
     .main-header p {

@@ -7,91 +7,105 @@ const groupColors = {
     tutku:    '#8b5cf6'
 };
 
+const ua = navigator.userAgent || '';
+const isAndroid = /Android/i.test(ua);
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const performanceProfile = {
+    isAndroid,
+    neuralPixelRatio: isAndroid ? 0.82 : Math.min(window.devicePixelRatio || 1, 2),
+    graphPixelRatio: isAndroid ? 0.9 : Math.min(window.devicePixelRatio || 1, 2),
+    neuralParticles: isAndroid ? 210 : (window.innerWidth < 768 ? 420 : 780),
+    ringSegments: isAndroid ? 72 : 160,
+    neuralFrameMs: isAndroid ? 50 : 16,
+    linkParticles: isAndroid ? 1 : 3,
+    linkLabelParticles: isAndroid ? 2 : 5,
+    imageSpin: !isAndroid && !prefersReducedMotion,
+    hologramScan: !isAndroid && !prefersReducedMotion,
+    nodeOrbitDots: isAndroid ? 1 : 2
+};
+
+if (isAndroid) {
+    document.documentElement.classList.add('android-optimized');
+}
+
 const graphData = {
   "nodes": [
     {
       "id": "Merkez", "name": "Brain", "val": 45, "group": "merkez",
-      "desc": "Ben Ravan Gahramanlı. 18 yaşındayım ve bilgisayar mühendisliği okuyorum. Web arayüzleri, Discord botları, oyunlar ve teknoloji tarafında kendimi geliştirmeyi seviyorum. Bu harita da benim projelerimi, ilgi alanlarımı ve öğrenme yolculuğumu keşfetmen için hazırlandı.",
+      "desc": "Zihnime, projelerime ve geliştirme dünyama hoş geldiniz! Etraftaki düğümlere tıklayarak ekosistemimi keşfedebilirsiniz.",
       // Buraya kendi profil fotoğrafının URL'sini yaz:
       "img": "img/brain.png"
     },
     {
       "id": "Beceriler", "name": "Yetenekler & Beceriler", "val": 22, "group": "kategori",
-      "desc": "HTML, CSS, JavaScript, C# ve temel siber güvenlik tarafında kendimi geliştiriyorum. Amacım sadece kod yazmak değil; göze güzel gelen, çalışan ve mantığı sağlam projeler üretmek.",
+      "desc": "Geliştirdiğim teknik kaslar ve uzmanlık alanlarım.",
       "img": "img/ytnk.png"
     },
     {
       "id": "Projeler", "name": "Projelerim", "val": 22, "group": "kategori",
-      "desc": "Kendi çapımda geliştirdiğim web siteleri, bot sistemleri ve arayüz denemeleri burada toplanıyor. Her proje bana yeni bir şey öğretiyor; bazen tasarım, bazen backend mantığı, bazen de kullanıcı deneyimi.",
-      "img": "img/project.png",
-      "panelImg": "img/project.png"
+      "desc": "Fikir aşamasından canlıya aldığım tüm dijital varlıklar.",
+      "img": "img/Untitled.png"
     },
     {
       "id": "Tutkular", "name": "İlgi Alanları & Siber Dünyam", "val": 22, "group": "kategori",
-      "desc": "Oyunlar, sistem optimizasyonu, donanım, siber güvenlik ve yeni teknolojiler ilgimi çekiyor. Hem eğlenmeyi hem de bu alanlardan teknik olarak bir şeyler öğrenmeyi seviyorum.",
+      "desc": "Beni heyecanlandıran, vizyonumu besleyen ve merak duyduğum konular.",
       "img": "img/sbr.png"
     },
     {
       "id": "JS", "name": "JavaScript (Node.js)", "val": 16, "group": "beceri",
-      "desc": "JavaScript ve Node.js ile özellikle Discord bot mantıkları, dinamik web özellikleri ve küçük otomasyonlar geliştiriyorum. Kodun arka tarafta nasıl çalıştığını görmek ve onu kullanıcıya düzgün yansıtmak hoşuma gidiyor.",
+      "desc": "Backend entegrasyonları, Discord bot mantıkları ve dinamik web uygulamaları geliştirme yetkinliği.",
       "img": "img/js.jpg"
     },
     {
       "id": "Frontend", "name": "Frontend (HTML/CSS)", "val": 14, "group": "beceri",
-      "desc": "Frontend tarafında HTML, CSS ve JavaScript ile göze güzel gelen, responsive ve canlı arayüzler yapmayı seviyorum. Bu alanda amacım sadece sayfa kurmak değil; siteye giren kişinin ilk anda tasarımı hissetmesi.",
-      "img": "img/htmlcss.png",
-      "panelImg": "img/htmlcss.png"
+      "desc": "Modern, responsive ve kullanıcı dostu arayüz tasarımları.",
+      "img": "img/ft.png"
     },
     {
       "id": "CSharp", "name": "C# & Programlama", "val": 14, "group": "beceri",
-      "desc": "C# ile programlama temellerimi, algoritma mantığımı ve nesne yönelimli düşünme becerimi geliştiriyorum. Bilgisayar mühendisliği okurken bu temel benim için önemli bir iskelet gibi.",
+      "desc": "Algoritma mantığı ve nesne yönelimli programlama temelleri.",
       "img": "img/csharp.png"
     },
     {
       "id": "Cyber", "name": "Siber Güvenlik & Pentest", "val": 14, "group": "beceri",
-      "desc": "Siber güvenlik tarafında ağ tarama, temel pentest mantığı, Kali Linux araçları ve sistemlerin nasıl çalıştığını anlama konuları ilgimi çekiyor. Bu alanı merak ederek ve kontrollü şekilde öğreniyorum.",
-      "img": "img/kali.png",
-      "panelImg": "img/kali.png"
+      "desc": "Ağ tarama (Nmap), Kali Linux araçları ve C2 mimarilerine olan pratik merak.",
+      "img": "https://api.dicebear.com/8.x/bottts-neutral/svg?seed=Cyber&backgroundColor=10b981"
     },
     {
-      "id": "ValthrionBot", "name": "Valthrion Bot", "val": 18, "group": "proje",
-      "desc": "Valthrion, kendi çapımda Discord botları geliştirdiğim bir isim. Bunu büyük bir şirket gibi değil, kişisel bot projelerimi ve özel sistem denemelerimi topladığım bir marka gibi düşünebilirsin. Sunucu yönetimi, otomasyon, komut sistemleri ve özel Discord özellikleri üzerine çalışıyorum.",
-      "img": "img/valthrion.png",
-      "panelImg": "img/valthrion.png"
+      "id": "ValthrionBot", "name": "Valthrion Bot Agency", "val": 18, "group": "proje",
+      "desc": "Gelişmiş, satış odaklı ve özel fonksiyonlara sahip Discord botları geliştirdiğim ve sunduğum ajans projem.",
+      "img": "img/sv.png"
     },
     {
       "id": "PortfolioWeb", "name": "valthrion.online", "val": 17, "group": "proje",
-      "desc": "valthrion.online, kendimi, projelerimi ve dijital kimliğimi göstermek için hazırladığım web alanı. Frontend tarafında geliştirdiğim tasarım zevkini ve Valthrion ismini aynı yerde toplamayı hedefliyorum.",
-      "img": "img/valthrion.png",
-      "panelImg": "img/valthrion.png"
+      "desc": "Cloudflare altyapısı üzerine kurulu, tüm servislerimi ve kimliğimi yansıtan profesyonel web portfolyom.",
+      "img": "img/sv.png"
     },
     // ── YENİ EKLENEN PROJE DÜĞÜMÜ ───────────────────────────────
     {
       "id": "CryptoTerminal", "name": "Crypto Terminal", "val": 16, "group": "proje",
-      "desc": "Kripto para verilerini, grafik analizlerini ve piyasa takibini tek bir arayüzde toplamayı hedefleyen terminal fikrim. Bu tarz projeler hem veri okuma hem de arayüz tasarlama tarafında beni geliştiriyor.",
-      "img": "img/crypto.png",
-      "panelImg": "img/crypto.png"
+      "desc": "Anlık kripto para verilerini, grafik analizlerini ve piyasa takibini tek bir arayüzden sunan gelişmiş terminal projem.",
+      "img": "img/b.png"
     },
     {
       "id": "Gaming", "name": "Taktik Oyunlar & Optimizasyon", "val": 14, "group": "tutku",
-      "desc": "CS2, Valorant ve FiveM gibi oyunlar oynuyorum. Rekabetçi oyunlarda refleks, takım oyunu ve sistem performansı önemli olduğu için oyun tarafı bende teknoloji merakıyla birleşiyor.",
+      "desc": "CS2, Valorant gibi rekabetçi oyunlar and donanım/sistem optimizasyonları üzerine çalışmalar.",
       "img": "img/ste-(2).png"
     },
     {
-      "id": "Hardware", "name": "FPS & Oyun Ayarları", "val": 14, "group": "tutku",
-      "desc": "Oyunlarda akıcı deneyim, doğru grafik ayarları, input lag azaltma ve sistemden daha stabil performans alma tarafıyla ilgileniyorum. Donanım muhabbetinden çok pratik ayar ve oyun performansı tarafı bana daha yakın.",
-      "img": "img/ste.png",
-      "panelImg": "img/ste.png"
+      "id": "Hardware", "name": "Yüksek Performanslı Donanım", "val": 14, "group": "tutku",
+      "desc": "İleri düzey işlemci/ekran kartı mimarileri, soğutma çözümleri ve benchmark testleri.",
+      "img": "https://api.dicebear.com/8.x/bottts-neutral/svg?seed=Hardware&backgroundColor=8b5cf6"
     },
     // ── OYUN DÜĞÜMLERİ ──────────────────────────────────────────
     {
       "id": "CS2", "name": "Counter-Strike 2", "val": 12, "group": "tutku",
-      "desc": "Counter-Strike 2, rekabetçi refleks, takım koordinasyonu ve oyun içi karar verme tarafını sevdiğim oyunlardan biri. Aim, taktik ve performans ayarı birleşince benim için çok keyifli oluyor.",
+      "desc": "Stratejik takım koordinasyonu ve yüksek refleks gerektiren rekabetçi taktik FPS deneyimim.",
       "img": "img/cs2.png"
     },
     {
       "id": "FiveM", "name": "FiveM (GTA 5 RP)", "val": 12, "group": "tutku",
-      "desc": "FiveM tarafında rol yapma, sunucu düzeni, karakter deneyimi ve topluluk dinamikleri ilgimi çekiyor. Hem oyun hem de sistem mantığı olan bir alan gibi görüyorum.",
+      "desc": "Metin ve ses tabanlı karakter simülasyonu, topluluk yönetimi ve rol yapma (Roleplay) dünyası.",
       "img": "img/fivem.png"
     }
   ],
@@ -118,73 +132,6 @@ const graphData = {
   ]
 };
 
-const categoryAnchors = {
-    merkez: { x: 0, y: -70 },
-    Beceriler: { x: -210, y: 90 },
-    Projeler: { x: 225, y: 90 },
-    Tutkular: { x: 0, y: 245 }
-};
-
-const categoryByGroup = {
-    beceri: 'Beceriler',
-    proje: 'Projeler',
-    tutku: 'Tutkular'
-};
-
-const nodeOffsets = {
-    JS: { x: -52, y: -82 },
-    Frontend: { x: 78, y: -58 },
-    CSharp: { x: -88, y: 72 },
-    Cyber: { x: 84, y: 86 },
-    ValthrionBot: { x: -78, y: -72 },
-    PortfolioWeb: { x: 84, y: -54 },
-    CryptoTerminal: { x: 8, y: 94 },
-    Gaming: { x: -88, y: -52 },
-    Hardware: { x: 92, y: -46 },
-    CS2: { x: -112, y: 74 },
-    FiveM: { x: 36, y: 98 }
-};
-
-const isAndroid = /Android/i.test(navigator.userAgent);
-const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
-const useAndroidFallback = isAndroid;
-const useLowPerfBackground = isAndroid;
-
-function getClusterTarget(node) {
-    if (node.group === 'merkez') return categoryAnchors.merkez;
-    if (node.group === 'kategori') return categoryAnchors[node.id] || { x: 0, y: 0 };
-
-    const categoryId = categoryByGroup[node.group];
-    const anchor = categoryAnchors[categoryId] || { x: 0, y: 0 };
-    const offset = nodeOffsets[node.id] || { x: 0, y: 0 };
-
-    return {
-        x: anchor.x + offset.x,
-        y: anchor.y + offset.y
-    };
-}
-
-function categoryClusterForce(strength = 0.14) {
-    let nodes = [];
-
-    function force(alpha) {
-        nodes.forEach(node => {
-            const target = getClusterTarget(node);
-            const nodeStrength = node.group === 'merkez' ? strength * 1.25 : strength;
-
-            node.vx += (target.x - node.x) * nodeStrength * alpha;
-            node.vy += (target.y - node.y) * nodeStrength * alpha;
-        });
-    }
-
-    force.initialize = nextNodes => {
-        nodes = nextNodes;
-    };
-
-    return force;
-}
-
 // ── RESIM CACHE ───────────────────────────────────────────────
 const imageCache = {};
 
@@ -208,13 +155,11 @@ const nodeName    = document.getElementById('node-name');
 const nodeDesc    = document.getElementById('node-desc');
 const panelAvatar = document.getElementById('panel-avatar');
 const panelAvatarWrap = document.getElementById('panel-avatar-wrap');
-const panelShowcase = document.getElementById('panel-showcase');
 
 let graph;
 let currentSelectedNode = null;
 let pulseAngle = 0; // merkez animasyonu için
 let sceneTime = 0;
-let floatStarted = false;
 const pointer = { x: 0, y: 0 };
 const cursorState = {
     x: window.innerWidth / 2,
@@ -235,7 +180,7 @@ window.addEventListener('pointermove', event => {
 
 function initCosmicCursor() {
     const cursor = document.getElementById('cosmic-cursor');
-    if (!cursor || useAndroidFallback || isTouchDevice) {
+    if (!cursor || window.matchMedia('(pointer: coarse)').matches) {
         document.body.style.cursor = 'auto';
         return;
     }
@@ -268,8 +213,6 @@ function initCosmicCursor() {
 }
 
 function spawnCursorTrail(x, y) {
-    if (useAndroidFallback || isTouchDevice) return;
-
     const dot = document.createElement('span');
     const size = 4 + Math.random() * 6;
     dot.className = 'cursor-trail';
@@ -286,7 +229,6 @@ function spawnCursorTrail(x, y) {
 function initNeuralBackground() {
     const canvas = document.getElementById('neural-bg');
     if (!canvas || !window.THREE) return;
-    canvas.style.display = 'block';
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -295,12 +237,13 @@ function initNeuralBackground() {
     const renderer = new THREE.WebGLRenderer({
         canvas,
         alpha: true,
-        antialias: !useLowPerfBackground
+        antialias: !performanceProfile.isAndroid,
+        powerPreference: performanceProfile.isAndroid ? 'low-power' : 'high-performance'
     });
-    renderer.setPixelRatio(useLowPerfBackground ? 1 : Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(performanceProfile.neuralPixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    const particleCount = useLowPerfBackground ? 180 : (window.innerWidth < 768 ? 320 : 780);
+    const particleCount = performanceProfile.neuralParticles;
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
     const palette = [
@@ -354,7 +297,7 @@ function initNeuralBackground() {
 
     for (let i = 0; i < 5; i++) {
         const curve = new THREE.EllipseCurve(0, 0, 18 + i * 7, 7 + i * 3, 0, Math.PI * 2);
-        const points = curve.getPoints(useLowPerfBackground ? 80 : 160).map(point => new THREE.Vector3(point.x, point.y, (i - 2) * 4));
+        const points = curve.getPoints(performanceProfile.ringSegments).map(point => new THREE.Vector3(point.x, point.y, (i - 2) * 4));
         const ring = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(points), ringMaterial.clone());
         ring.rotation.x = 0.62 + i * 0.26;
         ring.rotation.y = i * 0.42;
@@ -362,18 +305,23 @@ function initNeuralBackground() {
         ringGroup.add(ring);
     }
     scene.add(ringGroup);
-    ringGroup.visible = !useLowPerfBackground;
 
     const resize = () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
+        renderer.setPixelRatio(performanceProfile.neuralPixelRatio);
         renderer.setSize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener('resize', resize);
 
+    let lastRender = 0;
     const animate = () => {
         requestAnimationFrame(animate);
-        const time = performance.now() * 0.00035;
+        const now = performance.now();
+        if (now - lastRender < performanceProfile.neuralFrameMs) return;
+        lastRender = now;
+
+        const time = now * 0.00035;
 
         particles.rotation.y = time + pointer.x * 0.08;
         particles.rotation.x = Math.sin(time * 0.72) * 0.18 + pointer.y * 0.06;
@@ -407,31 +355,27 @@ function initGraph(data) {
             return link.label ? `${targetColor}cc` : `${sourceColor}99`;
         })
         .linkWidth(link => link.label ? 2.8 : 2)
-        .linkDirectionalParticles(link => useAndroidFallback ? 0 : (link.label ? 5 : 3))
-        .linkDirectionalParticleSpeed(useAndroidFallback ? 0 : 0.009)
-        .linkDirectionalParticleWidth(link => useAndroidFallback ? 0 : (link.label ? 3.4 : 2.6))
+        .linkDirectionalParticles(link => link.label ? performanceProfile.linkLabelParticles : performanceProfile.linkParticles)
+        .linkDirectionalParticleSpeed(performanceProfile.isAndroid ? 0.006 : 0.009)
+        .linkDirectionalParticleWidth(link => link.label ? (performanceProfile.isAndroid ? 2.8 : 3.4) : (performanceProfile.isAndroid ? 2.1 : 2.6))
 
         .nodeCanvasObject((node, ctx, globalScale) => {
-            sceneTime += 0.002;
+            sceneTime = performance.now() * (performanceProfile.isAndroid ? 0.00055 : 0.001);
             const isCenter = node.group === 'merkez';
             const radius = Math.sqrt(node.val) * 2.85; // okunaklılık için büyük düğümler
             const color  = groupColors[node.group] || '#ffffff';
             const nodePhase = [...node.id].reduce((sum, char) => sum + char.charCodeAt(0), 0) * 0.03;
-            const breath = 1;
+            const breath = 1 + Math.sin(sceneTime * 2.4 + nodePhase) * 0.045;
             const drawRadius = radius * breath;
-            const floatX = Math.sin(sceneTime * 0.72 + nodePhase) * (isCenter ? 0.8 : 2.2);
-            const floatY = Math.cos(sceneTime * 0.58 + nodePhase) * (isCenter ? 0.7 : 1.9);
-            const drawX = node.x + floatX;
-            const drawY = node.y + floatY;
 
             // Güvenlik Kontrolü: Koordinatlar sayısal olarak geçerli mi?
             const hasValidCoords = typeof node.x === 'number' && typeof node.y === 'number' && !isNaN(node.x) && !isNaN(node.y);
 
             // ── MERKEZ: animasyonlu parlama halkası ──
             if (isCenter && hasValidCoords) {
-                pulseAngle += 0.006;
-
-                let pulseRadius = drawRadius * 1.88;
+                pulseAngle += 0.018;
+                
+                let pulseRadius = drawRadius * 1.8 + Math.sin(pulseAngle) * 4;
                 // pulseRadius'un geçersiz olma durumunu filtrele
                 if (isNaN(pulseRadius) || !isFinite(pulseRadius)) {
                     pulseRadius = drawRadius * 1.8;
@@ -443,12 +387,12 @@ function initGraph(data) {
                 if (maxGradRadius > 0 && drawRadius > 0) {
                     try {
                         // Dış parıltı degradesi
-                        const grad = ctx.createRadialGradient(drawX, drawY, drawRadius, drawX, drawY, maxGradRadius);
+                        const grad = ctx.createRadialGradient(node.x, node.y, drawRadius, node.x, node.y, maxGradRadius);
                         grad.addColorStop(0, 'rgba(34, 211, 238, 0.45)');
                         grad.addColorStop(0.48, 'rgba(251, 113, 133, 0.16)');
                         grad.addColorStop(1, 'rgba(251,113,133,0)');
                         ctx.beginPath();
-                        ctx.arc(drawX, drawY, maxGradRadius, 0, 2 * Math.PI);
+                        ctx.arc(node.x, node.y, maxGradRadius, 0, 2 * Math.PI);
                         ctx.fillStyle = grad;
                         ctx.fill();
                     } catch (e) {
@@ -458,14 +402,14 @@ function initGraph(data) {
 
                 // Parlayan halka
                 ctx.beginPath();
-                ctx.arc(drawX, drawY, pulseRadius, 0, 2 * Math.PI);
-                ctx.strokeStyle = 'rgba(251,113,133,0.42)';
+                ctx.arc(node.x, node.y, pulseRadius, 0, 2 * Math.PI);
+                ctx.strokeStyle = `rgba(251,113,133,${0.42 + 0.28 * Math.sin(pulseAngle)})`;
                 ctx.lineWidth = 2 / globalScale;
                 ctx.stroke();
 
                 ctx.beginPath();
-                ctx.arc(drawX, drawY, pulseRadius * 1.35, 0, 2 * Math.PI);
-                ctx.strokeStyle = 'rgba(34,211,238,0.25)';
+                ctx.arc(node.x, node.y, pulseRadius * 1.35, 0, 2 * Math.PI);
+                ctx.strokeStyle = `rgba(34,211,238,${0.24 + 0.18 * Math.cos(pulseAngle * 0.7)})`;
                 ctx.lineWidth = 1.2 / globalScale;
                 ctx.stroke();
             }
@@ -476,30 +420,30 @@ function initGraph(data) {
             // ── SEÇİLİ DÜĞÜM: beyaz halo ──
             if (currentSelectedNode && node.id === currentSelectedNode.id) {
                 ctx.beginPath();
-                ctx.arc(drawX, drawY, drawRadius * 1.45, 0, 2 * Math.PI);
+                ctx.arc(node.x, node.y, drawRadius * 1.45, 0, 2 * Math.PI);
                 ctx.strokeStyle = 'rgba(255,255,255,0.72)';
                 ctx.lineWidth = 2.4 / globalScale;
                 ctx.stroke();
 
                 ctx.beginPath();
-                ctx.arc(drawX, drawY, drawRadius * 1.85, 0, 2 * Math.PI);
+                ctx.arc(node.x, node.y, drawRadius * 1.85, 0, 2 * Math.PI);
                 ctx.strokeStyle = `${color}55`;
                 ctx.lineWidth = 1.2 / globalScale;
                 ctx.stroke();
             }
 
-            drawNodeAura(ctx, drawX, drawY, drawRadius, color, globalScale, nodePhase, isCenter);
+            drawNodeOrbit(ctx, node, drawRadius, color, globalScale, nodePhase);
 
             // ── DÜĞÜM DAİRESİ ──
             ctx.save();
             ctx.beginPath();
-            ctx.arc(drawX, drawY, drawRadius, 0, 2 * Math.PI);
+            ctx.arc(node.x, node.y, drawRadius, 0, 2 * Math.PI);
             const nodeGrad = ctx.createRadialGradient(
-                drawX - drawRadius * 0.3,
-                drawY - drawRadius * 0.35,
+                node.x - drawRadius * 0.3,
+                node.y - drawRadius * 0.35,
                 drawRadius * 0.1,
-                drawX,
-                drawY,
+                node.x,
+                node.y,
                 drawRadius
             );
             nodeGrad.addColorStop(0, '#ffffff');
@@ -513,53 +457,57 @@ function initGraph(data) {
                 const img = imageCache[node.img];
                 if (img && img.complete && img.naturalWidth > 0) {
                     ctx.clip();
-                    const imageSpin = Math.sin(sceneTime * 0.28 + nodePhase) * 0.01;
-                    ctx.translate(drawX, drawY);
+                    const imageSpin = performanceProfile.imageSpin
+                        ? (isCenter ? Math.sin(sceneTime * 0.8) * 0.03 : Math.sin(sceneTime + nodePhase) * 0.018)
+                        : 0;
+                    ctx.translate(node.x, node.y);
                     ctx.rotate(imageSpin);
                     ctx.drawImage(img, -drawRadius, -drawRadius, drawRadius * 2, drawRadius * 2);
                     ctx.rotate(-imageSpin);
-                    ctx.translate(-drawX, -drawY);
-                    drawHologramScan(ctx, drawX, drawY, drawRadius, color, nodePhase);
+                    ctx.translate(-node.x, -node.y);
+                    if (performanceProfile.hologramScan) {
+                        drawHologramScan(ctx, node, drawRadius, color, nodePhase);
+                    }
                 }
             }
             ctx.restore();
 
             // ── DÜĞÜM ETKİNİ (renkli çerçeve) ──
             ctx.beginPath();
-            ctx.arc(drawX, drawY, drawRadius, 0, 2 * Math.PI);
+            ctx.arc(node.x, node.y, drawRadius, 0, 2 * Math.PI);
             ctx.strokeStyle = isCenter ? 'rgba(34, 211, 238, 0.95)' : `${color}aa`;
             ctx.lineWidth = isCenter ? 3.2 / globalScale : 1.7 / globalScale;
             ctx.stroke();
 
             const shineAngle = sceneTime * 2.2 + nodePhase;
             ctx.beginPath();
-            ctx.arc(drawX, drawY, drawRadius * 1.08, shineAngle, shineAngle + Math.PI * 0.55);
+            ctx.arc(node.x, node.y, drawRadius * 1.08, shineAngle, shineAngle + Math.PI * 0.55);
             ctx.strokeStyle = 'rgba(255,255,255,0.82)';
             ctx.lineWidth = 1.8 / globalScale;
             ctx.stroke();
 
             // ── YAZI ──
-            const fontSize = Math.max((isCenter ? 18 : 15.5) / globalScale, isCenter ? 8.5 : 7);
-            ctx.font = `800 ${fontSize}px 'Plus Jakarta Sans', sans-serif`;
+            const fontSize = Math.max((isCenter ? 17 : 15) / globalScale, isCenter ? 8 : 6.5);
+            ctx.font = `${isCenter ? 'bold ' : ''}${fontSize}px 'Plus Jakarta Sans', sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillStyle = '#f8fafc';
 
             const label = node.name;
-            const labelY = drawY + drawRadius + fontSize * 1.08;
+            const labelY = node.y + drawRadius + fontSize * 1.08;
             const labelWidth = ctx.measureText(label).width;
-            const labelPaddingX = 10 / globalScale;
-            const labelPaddingY = 6 / globalScale;
+            const labelPaddingX = 8 / globalScale;
+            const labelPaddingY = 5 / globalScale;
             const labelHeight = fontSize + labelPaddingY * 2;
             const labelRadius = 7 / globalScale;
 
             ctx.save();
             ctx.shadowColor = 'rgba(0,0,0,0.65)';
             ctx.shadowBlur = 12 / globalScale;
-            ctx.fillStyle = 'rgba(2, 6, 23, 0.82)';
+            ctx.fillStyle = 'rgba(2, 6, 23, 0.72)';
             roundedRect(
                 ctx,
-                drawX - labelWidth / 2 - labelPaddingX,
+                node.x - labelWidth / 2 - labelPaddingX,
                 labelY - labelHeight / 2,
                 labelWidth + labelPaddingX * 2,
                 labelHeight,
@@ -571,25 +519,11 @@ function initGraph(data) {
             ctx.stroke();
             ctx.restore();
 
-            ctx.save();
-            ctx.globalAlpha = 0.18;
-            ctx.fillStyle = color;
-            roundedRect(
-                ctx,
-                drawX - labelWidth / 2 - labelPaddingX,
-                labelY - labelHeight / 2,
-                labelWidth + labelPaddingX * 2,
-                labelHeight,
-                labelRadius
-            );
-            ctx.fill();
-            ctx.restore();
-
             // Yazı gölgesi
             ctx.shadowColor = color;
-            ctx.shadowBlur = isCenter ? 18 : 11;
+            ctx.shadowBlur = isCenter ? 14 : 8;
             ctx.fillStyle = '#f8fafc';
-            ctx.fillText(label, drawX, labelY);
+            ctx.fillText(label, node.x, labelY);
             ctx.shadowBlur = 0;
         })
 
@@ -602,35 +536,30 @@ function initGraph(data) {
             graph.zoom(Math.max(graph.zoom(), 2.45), 700);
         });
 
-    graph.d3Force('charge').strength(node => node.group === 'kategori' ? -520 : -245);
-    graph.d3Force('link').distance(link => link.label ? 96 : 82);
-    graph.d3Force('cluster', categoryClusterForce(window.innerWidth < 768 ? 0.19 : 0.13));
+    if (typeof graph.pixelRatio === 'function') {
+        graph.pixelRatio(performanceProfile.graphPixelRatio);
+    }
+
+    graph.d3Force('charge').strength(performanceProfile.isAndroid ? -260 : -360);
+    graph.d3Force('link').distance(link => {
+        const baseDistance = link.label ? 145 : 118;
+        return performanceProfile.isAndroid ? baseDistance * 0.9 : baseDistance;
+    });
+
+    if (performanceProfile.isAndroid) {
+        if (typeof graph.d3AlphaDecay === 'function') graph.d3AlphaDecay(0.045);
+        if (typeof graph.d3VelocityDecay === 'function') graph.d3VelocityDecay(0.42);
+        if (typeof graph.cooldownTicks === 'function') graph.cooldownTicks(90);
+    }
 
     setTimeout(() => {
-        graph.centerAt(window.innerWidth < 768 ? 0 : -130, 55, 1200);
-        graph.zoom(window.innerWidth < 768 ? 1.05 : 1.18, 1200);
+        graph.zoom(1.78, 1200);
         const centerNode = data.nodes.find(n => n.id === 'Merkez');
         if (centerNode) {
             currentSelectedNode = centerNode;
             preparePanelContent(centerNode);
         }
-        startLazyNodeMotion(data);
     }, 400);
-}
-
-function startLazyNodeMotion(data) {
-    if (floatStarted || !graph) return;
-    floatStarted = true;
-
-    data.nodes.forEach(node => {
-        const target = getClusterTarget(node);
-        node.x = Number.isFinite(node.x) ? node.x : target.x;
-        node.y = Number.isFinite(node.y) ? node.y : target.y;
-        node.vx = 0;
-        node.vy = 0;
-    });
-
-    graph.d3ReheatSimulation();
 }
 
 function roundedRect(ctx, x, y, width, height, radius) {
@@ -648,59 +577,59 @@ function roundedRect(ctx, x, y, width, height, radius) {
     ctx.closePath();
 }
 
-function drawNodeAura(ctx, x, y, radius, color, globalScale, phase, isCenter) {
-    const pulse = (Math.sin(sceneTime * 2.1 + phase) + 1) / 2;
-    const auraRadius = radius * (isCenter ? 1.42 : 1.24) + pulse * radius * 0.18;
-    const sparkCount = isCenter ? 8 : 5;
+function drawNodeOrbit(ctx, node, radius, color, globalScale, phase) {
+    const orbitRadius = radius * 1.32;
+    const orbitAngle = sceneTime * 2.6 + phase;
 
     ctx.save();
-    ctx.globalCompositeOperation = 'screen';
-
-    const glow = ctx.createRadialGradient(x, y, radius * 0.82, x, y, auraRadius * 1.48);
-    glow.addColorStop(0, `${color}00`);
-    glow.addColorStop(0.46, `${color}16`);
-    glow.addColorStop(1, `${color}00`);
     ctx.beginPath();
-    ctx.arc(x, y, auraRadius * 1.48, 0, Math.PI * 2);
-    ctx.fillStyle = glow;
-    ctx.fill();
+    ctx.ellipse(
+        node.x,
+        node.y,
+        orbitRadius,
+        orbitRadius * 0.42,
+        orbitAngle * 0.32,
+        0,
+        Math.PI * 2
+    );
+    ctx.strokeStyle = `${color}35`;
+    ctx.lineWidth = 1 / globalScale;
+    ctx.stroke();
 
-    for (let i = 0; i < sparkCount; i++) {
-        const angle = phase + i * ((Math.PI * 2) / sparkCount);
-        const twinkle = (Math.sin(sceneTime * 3.4 + phase + i * 1.7) + 1) / 2;
-        const sparkRadius = auraRadius + Math.sin(sceneTime * 1.3 + i) * radius * 0.06;
-        const dotX = x + Math.cos(angle) * sparkRadius;
-        const dotY = y + Math.sin(angle) * sparkRadius;
-        const dotSize = Math.max((1.2 + twinkle * 2.1) / globalScale, 0.9);
+    for (let i = 0; i < performanceProfile.nodeOrbitDots; i++) {
+        const angle = orbitAngle + i * Math.PI;
+        const x = node.x + Math.cos(angle) * orbitRadius;
+        const y = node.y + Math.sin(angle) * orbitRadius * 0.42;
 
         ctx.beginPath();
-        ctx.arc(dotX, dotY, dotSize, 0, Math.PI * 2);
-        ctx.fillStyle = twinkle > 0.72 ? '#ffffff' : color;
+        ctx.arc(x, y, Math.max(2.2 / globalScale, 1.2), 0, Math.PI * 2);
+        ctx.fillStyle = i === 0 ? '#ffffff' : color;
         ctx.shadowColor = color;
-        ctx.shadowBlur = 9 + twinkle * 10;
+        ctx.shadowBlur = 12;
         ctx.fill();
+        ctx.shadowBlur = 0;
     }
 
     ctx.restore();
 }
 
-function drawHologramScan(ctx, x, y, radius, color, phase) {
+function drawHologramScan(ctx, node, radius, color, phase) {
     const scan = ((Math.sin(sceneTime * 3.2 + phase) + 1) / 2) * radius * 2 - radius;
 
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
-    const grad = ctx.createLinearGradient(x - radius, y + scan - 10, x + radius, y + scan + 10);
+    const grad = ctx.createLinearGradient(node.x - radius, node.y + scan - 10, node.x + radius, node.y + scan + 10);
     grad.addColorStop(0, 'rgba(255,255,255,0)');
     grad.addColorStop(0.48, `${color}22`);
     grad.addColorStop(0.5, 'rgba(255,255,255,0.42)');
     grad.addColorStop(0.52, `${color}22`);
     grad.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = grad;
-    ctx.fillRect(x - radius, y + scan - 10, radius * 2, 20);
+    ctx.fillRect(node.x - radius, node.y + scan - 10, radius * 2, 20);
 
     ctx.fillStyle = 'rgba(255,255,255,0.08)';
-    for (let lineY = y - radius; lineY < y + radius; lineY += 6) {
-        ctx.fillRect(x - radius, lineY, radius * 2, 1);
+    for (let y = node.y - radius; y < node.y + radius; y += 6) {
+        ctx.fillRect(node.x - radius, y, radius * 2, 1);
     }
     ctx.restore();
 }
@@ -716,16 +645,6 @@ function updatePanelContent(node) {
 
     nodeName.textContent = node.name;
     nodeDesc.textContent  = node.desc;
-
-    if (node.panelImg) {
-        panelShowcase.src = node.panelImg;
-        panelShowcase.alt = `${node.name} görseli`;
-        panelShowcase.style.display = 'block';
-    } else {
-        panelShowcase.removeAttribute('src');
-        panelShowcase.alt = '';
-        panelShowcase.style.display = 'none';
-    }
 
     // Avatar
     if (node.img) {
