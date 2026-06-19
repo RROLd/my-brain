@@ -145,6 +145,12 @@ const nodeOffsets = {
     FiveM: { x: 36, y: 98 }
 };
 
+const isAndroid = /Android/i.test(navigator.userAgent);
+const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+const isMobile = isTouchDevice || /iPhone|iPad|iPod/i.test(navigator.userAgent) || isAndroid;
+const useSimplifiedRender = isMobile || window.innerWidth < 768;
+const useLowPerfBackground = isAndroid || isMobile;
+
 function getClusterTarget(node) {
     if (node.group === 'merkez') return categoryAnchors.merkez;
     if (node.group === 'kategori') return categoryAnchors[node.id] || { x: 0, y: 0 };
@@ -229,7 +235,7 @@ window.addEventListener('pointermove', event => {
 
 function initCosmicCursor() {
     const cursor = document.getElementById('cosmic-cursor');
-    if (!cursor || window.matchMedia('(pointer: coarse)').matches) {
+    if (!cursor || isTouchDevice) {
         document.body.style.cursor = 'auto';
         return;
     }
@@ -262,6 +268,8 @@ function initCosmicCursor() {
 }
 
 function spawnCursorTrail(x, y) {
+    if (isTouchDevice) return;
+
     const dot = document.createElement('span');
     const size = 4 + Math.random() * 6;
     dot.className = 'cursor-trail';
@@ -277,7 +285,10 @@ function spawnCursorTrail(x, y) {
 // ── 3D ARKA PLAN ─────────────────────────────────────────────
 function initNeuralBackground() {
     const canvas = document.getElementById('neural-bg');
-    if (!canvas || !window.THREE) return;
+    if (!canvas || !window.THREE || useLowPerfBackground) {
+        if (canvas) canvas.style.display = 'none';
+        return;
+    }
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -288,10 +299,10 @@ function initNeuralBackground() {
         alpha: true,
         antialias: true
     });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(useLowPerfBackground ? 1 : Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    const particleCount = window.innerWidth < 768 ? 420 : 780;
+    const particleCount = window.innerWidth < 768 ? 320 : 780;
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
     const palette = [
@@ -398,9 +409,9 @@ function initGraph(data) {
             return link.label ? `${targetColor}cc` : `${sourceColor}99`;
         })
         .linkWidth(link => link.label ? 2.8 : 2)
-        .linkDirectionalParticles(link => link.label ? 5 : 3)
-        .linkDirectionalParticleSpeed(0.009)
-        .linkDirectionalParticleWidth(link => link.label ? 3.4 : 2.6)
+        .linkDirectionalParticles(link => useSimplifiedRender ? 0 : (link.label ? 5 : 3))
+        .linkDirectionalParticleSpeed(useSimplifiedRender ? 0 : 0.009)
+        .linkDirectionalParticleWidth(link => useSimplifiedRender ? 0 : (link.label ? 3.4 : 2.6))
 
         .nodeCanvasObject((node, ctx, globalScale) => {
             sceneTime += 0.002;
@@ -463,6 +474,27 @@ function initGraph(data) {
 
             // Eğer koordinatlar henüz yüklenmediyse çizimin kalanını bu frame için pas geç
             if (!hasValidCoords) return;
+
+            // Eğer basitleştirilmiş mobil render kullanılıyorsa, sadece temel düğüm ve etiket göster
+            if (useSimplifiedRender) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(drawX, drawY, drawRadius, 0, 2 * Math.PI);
+                ctx.fillStyle = color;
+                ctx.fill();
+                ctx.strokeStyle = '#00000055';
+                ctx.lineWidth = 1.4 / globalScale;
+                ctx.stroke();
+
+                const fontSize = Math.max((isCenter ? 16 : 14) / globalScale, 8);
+                ctx.font = `700 ${fontSize}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillText(node.name, drawX, drawY + drawRadius + fontSize * 1.16);
+                ctx.restore();
+                return;
+            }
 
             // ── SEÇİLİ DÜĞÜM: beyaz halo ──
             if (currentSelectedNode && node.id === currentSelectedNode.id) {
