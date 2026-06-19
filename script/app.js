@@ -118,33 +118,6 @@ const graphData = {
   ]
 };
 
-const isCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
-const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const isSmallScreen = window.innerWidth < 768;
-const isAndroid = /Android/i.test(navigator.userAgent);
-const isLowPowerMode = isCoarsePointer || isSmallScreen || isAndroid || prefersReducedMotion;
-
-// ── ANDROID KASMA DÜZELTMESİ ──────────────────────────────────
-// force-graph kütüphanesi kendi canvas'ını window.devicePixelRatio'ya
-// göre boyutlandırıyor ve bu değeri özelleştirmenin bir yolu yok.
-// Android telefonlarda devicePixelRatio genelde 2.5–4 arası olur
-// (iPhone'da sabit 2-3'tür ama daha az piksel sayısı vardır), bu da
-// canvas'ı gerçek ekrandan çok daha yüksek çözünürlükte çizdiriyor.
-// 15 node için her karede gradyan + gölge + clip içeren ağır bir
-// nodeCanvasObject çalıştığından, bu fazladan piksel sayısı sürekli
-// kasmaya yol açıyor. devicePixelRatio'yu burada, force-graph ve diğer
-// her şey yüklenmeden önce makul bir tavana sabitliyoruz.
-if (isLowPowerMode) {
-    try {
-        Object.defineProperty(window, 'devicePixelRatio', {
-            get: () => 1,
-            configurable: true
-        });
-    } catch (e) {
-        // Bazı tarayıcılar override'a izin vermeyebilir, sorun değil.
-    }
-}
-
 const categoryAnchors = {
     merkez: { x: 0, y: -70 },
     Beceriler: { x: -210, y: 90 },
@@ -212,7 +185,6 @@ const imageCache = {};
 function loadImage(url) {
     if (imageCache[url]) return imageCache[url];
     const img = new Image();
-    img.decoding = 'async';
     img.src = url;
     imageCache[url] = img;
     return img;
@@ -237,7 +209,6 @@ let currentSelectedNode = null;
 let pulseAngle = 0; // merkez animasyonu için
 let sceneTime = 0;
 let floatStarted = false;
-const nodePhaseCache = {};
 const pointer = { x: 0, y: 0 };
 const cursorState = {
     x: window.innerWidth / 2,
@@ -308,11 +279,6 @@ function initNeuralBackground() {
     const canvas = document.getElementById('neural-bg');
     if (!canvas || !window.THREE) return;
 
-    if (isLowPowerMode) {
-        canvas.hidden = true;
-        return;
-    }
-
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.z = 72;
@@ -320,13 +286,12 @@ function initNeuralBackground() {
     const renderer = new THREE.WebGLRenderer({
         canvas,
         alpha: true,
-        antialias: false,
-        powerPreference: 'low-power'
+        antialias: true
     });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.35));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    const particleCount = 520;
+    const particleCount = window.innerWidth < 768 ? 420 : 780;
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
     const palette = [
@@ -378,9 +343,9 @@ function initNeuralBackground() {
         blending: THREE.AdditiveBlending
     });
 
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 5; i++) {
         const curve = new THREE.EllipseCurve(0, 0, 18 + i * 7, 7 + i * 3, 0, Math.PI * 2);
-        const points = curve.getPoints(90).map(point => new THREE.Vector3(point.x, point.y, (i - 2) * 4));
+        const points = curve.getPoints(160).map(point => new THREE.Vector3(point.x, point.y, (i - 2) * 4));
         const ring = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(points), ringMaterial.clone());
         ring.rotation.x = 0.62 + i * 0.26;
         ring.rotation.y = i * 0.42;
@@ -397,11 +362,8 @@ function initNeuralBackground() {
     };
     window.addEventListener('resize', resize);
 
-    let lastFrame = 0;
-    const animate = now => {
+    const animate = () => {
         requestAnimationFrame(animate);
-        if (now - lastFrame < 33) return;
-        lastFrame = now;
         const time = performance.now() * 0.00035;
 
         particles.rotation.y = time + pointer.x * 0.08;
@@ -421,20 +383,12 @@ function initNeuralBackground() {
 // ── GRAFİK BAŞLATMA ───────────────────────────────────────────
 function initGraph(data) {
     const container = document.getElementById('graph-container');
-    const motionScale = isLowPowerMode ? 0 : 1;
-    const centerDuration = isLowPowerMode ? 260 : 700;
-    const linkParticleCount = isLowPowerMode ? 0 : link => link.label ? 5 : 3;
 
     graph = ForceGraph()(container)
         .graphData(data)
         .backgroundColor('rgba(0,0,0,0)')
         .nodeId('id')
         .nodeVal(d => d.val)
-        .warmupTicks(isLowPowerMode ? 80 : 140)
-        .cooldownTicks(isLowPowerMode ? 60 : 140)
-        .cooldownTime(isLowPowerMode ? 900 : 2600)
-        .minZoom(0.4)
-        .maxZoom(8)
 
         .linkColor(link => {
             const source = typeof link.source === 'object' ? link.source : data.nodes.find(n => n.id === link.source);
@@ -444,20 +398,20 @@ function initGraph(data) {
             return link.label ? `${targetColor}cc` : `${sourceColor}99`;
         })
         .linkWidth(link => link.label ? 2.8 : 2)
-        .linkDirectionalParticles(linkParticleCount)
+        .linkDirectionalParticles(link => link.label ? 5 : 3)
         .linkDirectionalParticleSpeed(0.009)
         .linkDirectionalParticleWidth(link => link.label ? 3.4 : 2.6)
 
         .nodeCanvasObject((node, ctx, globalScale) => {
-            sceneTime += isLowPowerMode ? 0 : 0.002;
+            sceneTime += 0.002;
             const isCenter = node.group === 'merkez';
             const radius = Math.sqrt(node.val) * 2.85; // okunaklılık için büyük düğümler
             const color  = groupColors[node.group] || '#ffffff';
-            const nodePhase = nodePhaseCache[node.id] ?? (nodePhaseCache[node.id] = [...node.id].reduce((sum, char) => sum + char.charCodeAt(0), 0) * 0.03);
+            const nodePhase = [...node.id].reduce((sum, char) => sum + char.charCodeAt(0), 0) * 0.03;
             const breath = 1;
             const drawRadius = radius * breath;
-            const floatX = Math.sin(sceneTime * 0.72 + nodePhase) * (isCenter ? 0.8 : 2.2) * motionScale;
-            const floatY = Math.cos(sceneTime * 0.58 + nodePhase) * (isCenter ? 0.7 : 1.9) * motionScale;
+            const floatX = Math.sin(sceneTime * 0.72 + nodePhase) * (isCenter ? 0.8 : 2.2);
+            const floatY = Math.cos(sceneTime * 0.58 + nodePhase) * (isCenter ? 0.7 : 1.9);
             const drawX = node.x + floatX;
             const drawY = node.y + floatY;
 
@@ -465,7 +419,7 @@ function initGraph(data) {
             const hasValidCoords = typeof node.x === 'number' && typeof node.y === 'number' && !isNaN(node.x) && !isNaN(node.y);
 
             // ── MERKEZ: animasyonlu parlama halkası ──
-            if (isCenter && hasValidCoords && !isLowPowerMode) {
+            if (isCenter && hasValidCoords) {
                 pulseAngle += 0.006;
 
                 let pulseRadius = drawRadius * 1.88;
@@ -525,11 +479,7 @@ function initGraph(data) {
                 ctx.stroke();
             }
 
-            if (isLowPowerMode) {
-                drawStaticNodeAura(ctx, drawX, drawY, drawRadius, color, globalScale, isCenter);
-            } else {
-                drawNodeAura(ctx, drawX, drawY, drawRadius, color, globalScale, nodePhase, isCenter);
-            }
+            drawNodeAura(ctx, drawX, drawY, drawRadius, color, globalScale, nodePhase, isCenter);
 
             // ── DÜĞÜM DAİRESİ ──
             ctx.save();
@@ -554,15 +504,13 @@ function initGraph(data) {
                 const img = imageCache[node.img];
                 if (img && img.complete && img.naturalWidth > 0) {
                     ctx.clip();
-                    const imageSpin = isLowPowerMode ? 0 : Math.sin(sceneTime * 0.28 + nodePhase) * 0.01;
+                    const imageSpin = Math.sin(sceneTime * 0.28 + nodePhase) * 0.01;
                     ctx.translate(drawX, drawY);
                     ctx.rotate(imageSpin);
                     ctx.drawImage(img, -drawRadius, -drawRadius, drawRadius * 2, drawRadius * 2);
                     ctx.rotate(-imageSpin);
                     ctx.translate(-drawX, -drawY);
-                    if (!isLowPowerMode) {
-                        drawHologramScan(ctx, drawX, drawY, drawRadius, color, nodePhase);
-                    }
+                    drawHologramScan(ctx, drawX, drawY, drawRadius, color, nodePhase);
                 }
             }
             ctx.restore();
@@ -574,14 +522,12 @@ function initGraph(data) {
             ctx.lineWidth = isCenter ? 3.2 / globalScale : 1.7 / globalScale;
             ctx.stroke();
 
-            if (!isLowPowerMode) {
-                const shineAngle = sceneTime * 2.2 + nodePhase;
-                ctx.beginPath();
-                ctx.arc(drawX, drawY, drawRadius * 1.08, shineAngle, shineAngle + Math.PI * 0.55);
-                ctx.strokeStyle = 'rgba(255,255,255,0.82)';
-                ctx.lineWidth = 1.8 / globalScale;
-                ctx.stroke();
-            }
+            const shineAngle = sceneTime * 2.2 + nodePhase;
+            ctx.beginPath();
+            ctx.arc(drawX, drawY, drawRadius * 1.08, shineAngle, shineAngle + Math.PI * 0.55);
+            ctx.strokeStyle = 'rgba(255,255,255,0.82)';
+            ctx.lineWidth = 1.8 / globalScale;
+            ctx.stroke();
 
             // ── YAZI ──
             const fontSize = Math.max((isCenter ? 18 : 15.5) / globalScale, isCenter ? 8.5 : 7);
@@ -599,10 +545,8 @@ function initGraph(data) {
             const labelRadius = 7 / globalScale;
 
             ctx.save();
-            if (!isLowPowerMode) {
-                ctx.shadowColor = 'rgba(0,0,0,0.65)';
-                ctx.shadowBlur = 12 / globalScale;
-            }
+            ctx.shadowColor = 'rgba(0,0,0,0.65)';
+            ctx.shadowBlur = 12 / globalScale;
             ctx.fillStyle = 'rgba(2, 6, 23, 0.82)';
             roundedRect(
                 ctx,
@@ -633,10 +577,8 @@ function initGraph(data) {
             ctx.restore();
 
             // Yazı gölgesi
-            if (!isLowPowerMode) {
-                ctx.shadowColor = color;
-                ctx.shadowBlur = isCenter ? 18 : 11;
-            }
+            ctx.shadowColor = color;
+            ctx.shadowBlur = isCenter ? 18 : 11;
             ctx.fillStyle = '#f8fafc';
             ctx.fillText(label, drawX, labelY);
             ctx.shadowBlur = 0;
@@ -647,17 +589,17 @@ function initGraph(data) {
         .onNodeClick(node => {
             currentSelectedNode = node;
             updatePanelContent(node);
-            graph.centerAt(node.x, node.y, centerDuration);
-            graph.zoom(Math.max(graph.zoom(), isLowPowerMode ? 2.05 : 2.45), centerDuration);
+            graph.centerAt(node.x, node.y, 700);
+            graph.zoom(Math.max(graph.zoom(), 2.45), 700);
         });
 
-    graph.d3Force('charge').strength(node => node.group === 'kategori' ? -420 : -205);
-    graph.d3Force('link').distance(link => link.label ? 92 : 80);
-    graph.d3Force('cluster', categoryClusterForce(isLowPowerMode ? 0.22 : 0.13));
+    graph.d3Force('charge').strength(node => node.group === 'kategori' ? -520 : -245);
+    graph.d3Force('link').distance(link => link.label ? 96 : 82);
+    graph.d3Force('cluster', categoryClusterForce(window.innerWidth < 768 ? 0.19 : 0.13));
 
     setTimeout(() => {
-        graph.centerAt(window.innerWidth < 768 ? 0 : -130, 55, isLowPowerMode ? 300 : 1200);
-        graph.zoom(window.innerWidth < 768 ? 1.05 : 1.18, isLowPowerMode ? 300 : 1200);
+        graph.centerAt(window.innerWidth < 768 ? 0 : -130, 55, 1200);
+        graph.zoom(window.innerWidth < 768 ? 1.05 : 1.18, 1200);
         const centerNode = data.nodes.find(n => n.id === 'Merkez');
         if (centerNode) {
             currentSelectedNode = centerNode;
@@ -695,17 +637,6 @@ function roundedRect(ctx, x, y, width, height, radius) {
     ctx.lineTo(x, y + r);
     ctx.quadraticCurveTo(x, y, x + r, y);
     ctx.closePath();
-}
-
-function drawStaticNodeAura(ctx, x, y, radius, color, globalScale, isCenter) {
-    ctx.save();
-    ctx.globalCompositeOperation = 'screen';
-    ctx.beginPath();
-    ctx.arc(x, y, radius * (isCenter ? 1.5 : 1.25), 0, Math.PI * 2);
-    ctx.strokeStyle = `${color}44`;
-    ctx.lineWidth = (isCenter ? 1.8 : 1.1) / globalScale;
-    ctx.stroke();
-    ctx.restore();
 }
 
 function drawNodeAura(ctx, x, y, radius, color, globalScale, phase, isCenter) {
