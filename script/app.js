@@ -146,10 +146,10 @@ const nodeOffsets = {
 };
 
 const isAndroid = /Android/i.test(navigator.userAgent);
+const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
-const isMobile = isTouchDevice || /iPhone|iPad|iPod/i.test(navigator.userAgent) || isAndroid;
-const useSimplifiedRender = isMobile || window.innerWidth < 768;
-const useLowPerfBackground = isAndroid || isMobile;
+const useAndroidFallback = isAndroid;
+const useLowPerfBackground = isAndroid;
 
 function getClusterTarget(node) {
     if (node.group === 'merkez') return categoryAnchors.merkez;
@@ -235,7 +235,7 @@ window.addEventListener('pointermove', event => {
 
 function initCosmicCursor() {
     const cursor = document.getElementById('cosmic-cursor');
-    if (!cursor || isTouchDevice) {
+    if (!cursor || useAndroidFallback || isTouchDevice) {
         document.body.style.cursor = 'auto';
         return;
     }
@@ -268,7 +268,7 @@ function initCosmicCursor() {
 }
 
 function spawnCursorTrail(x, y) {
-    if (isTouchDevice) return;
+    if (useAndroidFallback || isTouchDevice) return;
 
     const dot = document.createElement('span');
     const size = 4 + Math.random() * 6;
@@ -285,10 +285,8 @@ function spawnCursorTrail(x, y) {
 // ── 3D ARKA PLAN ─────────────────────────────────────────────
 function initNeuralBackground() {
     const canvas = document.getElementById('neural-bg');
-    if (!canvas || !window.THREE || useLowPerfBackground) {
-        if (canvas) canvas.style.display = 'none';
-        return;
-    }
+    if (!canvas || !window.THREE) return;
+    canvas.style.display = 'block';
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -297,12 +295,12 @@ function initNeuralBackground() {
     const renderer = new THREE.WebGLRenderer({
         canvas,
         alpha: true,
-        antialias: true
+        antialias: !useLowPerfBackground
     });
     renderer.setPixelRatio(useLowPerfBackground ? 1 : Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    const particleCount = window.innerWidth < 768 ? 320 : 780;
+    const particleCount = useLowPerfBackground ? 180 : (window.innerWidth < 768 ? 320 : 780);
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
     const palette = [
@@ -356,7 +354,7 @@ function initNeuralBackground() {
 
     for (let i = 0; i < 5; i++) {
         const curve = new THREE.EllipseCurve(0, 0, 18 + i * 7, 7 + i * 3, 0, Math.PI * 2);
-        const points = curve.getPoints(160).map(point => new THREE.Vector3(point.x, point.y, (i - 2) * 4));
+        const points = curve.getPoints(useLowPerfBackground ? 80 : 160).map(point => new THREE.Vector3(point.x, point.y, (i - 2) * 4));
         const ring = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(points), ringMaterial.clone());
         ring.rotation.x = 0.62 + i * 0.26;
         ring.rotation.y = i * 0.42;
@@ -364,7 +362,7 @@ function initNeuralBackground() {
         ringGroup.add(ring);
     }
     scene.add(ringGroup);
-    ringGroup.visible = false;
+    ringGroup.visible = !useLowPerfBackground;
 
     const resize = () => {
         camera.aspect = window.innerWidth / window.innerHeight;
@@ -409,9 +407,9 @@ function initGraph(data) {
             return link.label ? `${targetColor}cc` : `${sourceColor}99`;
         })
         .linkWidth(link => link.label ? 2.8 : 2)
-        .linkDirectionalParticles(link => useSimplifiedRender ? 0 : (link.label ? 5 : 3))
-        .linkDirectionalParticleSpeed(useSimplifiedRender ? 0 : 0.009)
-        .linkDirectionalParticleWidth(link => useSimplifiedRender ? 0 : (link.label ? 3.4 : 2.6))
+        .linkDirectionalParticles(link => useAndroidFallback ? 0 : (link.label ? 5 : 3))
+        .linkDirectionalParticleSpeed(useAndroidFallback ? 0 : 0.009)
+        .linkDirectionalParticleWidth(link => useAndroidFallback ? 0 : (link.label ? 3.4 : 2.6))
 
         .nodeCanvasObject((node, ctx, globalScale) => {
             sceneTime += 0.002;
@@ -474,27 +472,6 @@ function initGraph(data) {
 
             // Eğer koordinatlar henüz yüklenmediyse çizimin kalanını bu frame için pas geç
             if (!hasValidCoords) return;
-
-            // Eğer basitleştirilmiş mobil render kullanılıyorsa, sadece temel düğüm ve etiket göster
-            if (useSimplifiedRender) {
-                ctx.save();
-                ctx.beginPath();
-                ctx.arc(drawX, drawY, drawRadius, 0, 2 * Math.PI);
-                ctx.fillStyle = color;
-                ctx.fill();
-                ctx.strokeStyle = '#00000055';
-                ctx.lineWidth = 1.4 / globalScale;
-                ctx.stroke();
-
-                const fontSize = Math.max((isCenter ? 16 : 14) / globalScale, 8);
-                ctx.font = `700 ${fontSize}px sans-serif`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillStyle = '#f8fafc';
-                ctx.fillText(node.name, drawX, drawY + drawRadius + fontSize * 1.16);
-                ctx.restore();
-                return;
-            }
 
             // ── SEÇİLİ DÜĞÜM: beyaz halo ──
             if (currentSelectedNode && node.id === currentSelectedNode.id) {
