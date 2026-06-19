@@ -124,6 +124,27 @@ const isSmallScreen = window.innerWidth < 768;
 const isAndroid = /Android/i.test(navigator.userAgent);
 const isLowPowerMode = isCoarsePointer || isSmallScreen || isAndroid || prefersReducedMotion;
 
+// ── ANDROID KASMA DÜZELTMESİ ──────────────────────────────────
+// force-graph kütüphanesi kendi canvas'ını window.devicePixelRatio'ya
+// göre boyutlandırıyor ve bu değeri özelleştirmenin bir yolu yok.
+// Android telefonlarda devicePixelRatio genelde 2.5–4 arası olur
+// (iPhone'da sabit 2-3'tür ama daha az piksel sayısı vardır), bu da
+// canvas'ı gerçek ekrandan çok daha yüksek çözünürlükte çizdiriyor.
+// 15 node için her karede gradyan + gölge + clip içeren ağır bir
+// nodeCanvasObject çalıştığından, bu fazladan piksel sayısı sürekli
+// kasmaya yol açıyor. devicePixelRatio'yu burada, force-graph ve diğer
+// her şey yüklenmeden önce makul bir tavana sabitliyoruz.
+if (isLowPowerMode) {
+    try {
+        Object.defineProperty(window, 'devicePixelRatio', {
+            get: () => 1,
+            configurable: true
+        });
+    } catch (e) {
+        // Bazı tarayıcılar override'a izin vermeyebilir, sorun değil.
+    }
+}
+
 const categoryAnchors = {
     merkez: { x: 0, y: -70 },
     Beceriler: { x: -210, y: 90 },
@@ -216,6 +237,7 @@ let currentSelectedNode = null;
 let pulseAngle = 0; // merkez animasyonu için
 let sceneTime = 0;
 let floatStarted = false;
+const nodePhaseCache = {};
 const pointer = { x: 0, y: 0 };
 const cursorState = {
     x: window.innerWidth / 2,
@@ -411,6 +433,8 @@ function initGraph(data) {
         .warmupTicks(isLowPowerMode ? 80 : 140)
         .cooldownTicks(isLowPowerMode ? 60 : 140)
         .cooldownTime(isLowPowerMode ? 900 : 2600)
+        .minZoom(0.4)
+        .maxZoom(8)
 
         .linkColor(link => {
             const source = typeof link.source === 'object' ? link.source : data.nodes.find(n => n.id === link.source);
@@ -429,7 +453,7 @@ function initGraph(data) {
             const isCenter = node.group === 'merkez';
             const radius = Math.sqrt(node.val) * 2.85; // okunaklılık için büyük düğümler
             const color  = groupColors[node.group] || '#ffffff';
-            const nodePhase = [...node.id].reduce((sum, char) => sum + char.charCodeAt(0), 0) * 0.03;
+            const nodePhase = nodePhaseCache[node.id] ?? (nodePhaseCache[node.id] = [...node.id].reduce((sum, char) => sum + char.charCodeAt(0), 0) * 0.03);
             const breath = 1;
             const drawRadius = radius * breath;
             const floatX = Math.sin(sceneTime * 0.72 + nodePhase) * (isCenter ? 0.8 : 2.2) * motionScale;
@@ -575,8 +599,10 @@ function initGraph(data) {
             const labelRadius = 7 / globalScale;
 
             ctx.save();
-            ctx.shadowColor = 'rgba(0,0,0,0.65)';
-            ctx.shadowBlur = 12 / globalScale;
+            if (!isLowPowerMode) {
+                ctx.shadowColor = 'rgba(0,0,0,0.65)';
+                ctx.shadowBlur = 12 / globalScale;
+            }
             ctx.fillStyle = 'rgba(2, 6, 23, 0.82)';
             roundedRect(
                 ctx,
@@ -607,8 +633,10 @@ function initGraph(data) {
             ctx.restore();
 
             // Yazı gölgesi
-            ctx.shadowColor = color;
-            ctx.shadowBlur = isCenter ? 18 : 11;
+            if (!isLowPowerMode) {
+                ctx.shadowColor = color;
+                ctx.shadowBlur = isCenter ? 18 : 11;
+            }
             ctx.fillStyle = '#f8fafc';
             ctx.fillText(label, drawX, labelY);
             ctx.shadowBlur = 0;
