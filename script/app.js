@@ -12,16 +12,17 @@ const isAndroid = /Android/i.test(ua);
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const performanceProfile = {
     isAndroid,
-    neuralPixelRatio: isAndroid ? 0.82 : Math.min(window.devicePixelRatio || 1, 2),
-    graphPixelRatio: isAndroid ? 0.9 : Math.min(window.devicePixelRatio || 1, 2),
-    neuralParticles: isAndroid ? 210 : (window.innerWidth < 768 ? 420 : 780),
+    neuralPixelRatio: isAndroid ? 0.6 : Math.min(window.devicePixelRatio || 1, 2),
+    graphPixelRatio: isAndroid ? 0.65 : Math.min(window.devicePixelRatio || 1, 2),
+    neuralParticles: isAndroid ? 0 : (window.innerWidth < 768 ? 420 : 780),
     ringSegments: isAndroid ? 72 : 160,
-    neuralFrameMs: isAndroid ? 50 : 16,
-    linkParticles: isAndroid ? 1 : 3,
-    linkLabelParticles: isAndroid ? 2 : 5,
+    neuralFrameMs: isAndroid ? 1000 : 16,
+    linkParticles: isAndroid ? 0 : 3,
+    linkLabelParticles: isAndroid ? 0 : 5,
     imageSpin: !isAndroid && !prefersReducedMotion,
     hologramScan: !isAndroid && !prefersReducedMotion,
-    nodeOrbitDots: isAndroid ? 1 : 2
+    nodeOrbitDots: isAndroid ? 0 : 2,
+    animatedNodeEffects: !isAndroid && !prefersReducedMotion
 };
 
 if (isAndroid) {
@@ -229,6 +230,10 @@ function spawnCursorTrail(x, y) {
 function initNeuralBackground() {
     const canvas = document.getElementById('neural-bg');
     if (!canvas || !window.THREE) return;
+    if (performanceProfile.isAndroid) {
+        canvas.style.display = 'none';
+        return;
+    }
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -354,7 +359,7 @@ function initGraph(data) {
             const targetColor = target ? groupColors[target.group] : '#38bdf8';
             return link.label ? `${targetColor}cc` : `${sourceColor}99`;
         })
-        .linkWidth(link => link.label ? 2.8 : 2)
+        .linkWidth(link => performanceProfile.isAndroid ? (link.label ? 1.6 : 1.2) : (link.label ? 2.8 : 2))
         .linkDirectionalParticles(link => link.label ? performanceProfile.linkLabelParticles : performanceProfile.linkParticles)
         .linkDirectionalParticleSpeed(performanceProfile.isAndroid ? 0.006 : 0.009)
         .linkDirectionalParticleWidth(link => link.label ? (performanceProfile.isAndroid ? 2.8 : 3.4) : (performanceProfile.isAndroid ? 2.1 : 2.6))
@@ -365,14 +370,16 @@ function initGraph(data) {
             const radius = Math.sqrt(node.val) * 2.85; // okunaklılık için büyük düğümler
             const color  = groupColors[node.group] || '#ffffff';
             const nodePhase = [...node.id].reduce((sum, char) => sum + char.charCodeAt(0), 0) * 0.03;
-            const breath = 1 + Math.sin(sceneTime * 2.4 + nodePhase) * 0.045;
+            const breath = performanceProfile.animatedNodeEffects
+                ? 1 + Math.sin(sceneTime * 2.4 + nodePhase) * 0.045
+                : 1;
             const drawRadius = radius * breath;
 
             // Güvenlik Kontrolü: Koordinatlar sayısal olarak geçerli mi?
             const hasValidCoords = typeof node.x === 'number' && typeof node.y === 'number' && !isNaN(node.x) && !isNaN(node.y);
 
             // ── MERKEZ: animasyonlu parlama halkası ──
-            if (isCenter && hasValidCoords) {
+            if (isCenter && hasValidCoords && performanceProfile.animatedNodeEffects) {
                 pulseAngle += 0.018;
                 
                 let pulseRadius = drawRadius * 1.8 + Math.sin(pulseAngle) * 4;
@@ -432,24 +439,30 @@ function initGraph(data) {
                 ctx.stroke();
             }
 
-            drawNodeOrbit(ctx, node, drawRadius, color, globalScale, nodePhase);
+            if (performanceProfile.nodeOrbitDots > 0) {
+                drawNodeOrbit(ctx, node, drawRadius, color, globalScale, nodePhase);
+            }
 
             // ── DÜĞÜM DAİRESİ ──
             ctx.save();
             ctx.beginPath();
             ctx.arc(node.x, node.y, drawRadius, 0, 2 * Math.PI);
-            const nodeGrad = ctx.createRadialGradient(
-                node.x - drawRadius * 0.3,
-                node.y - drawRadius * 0.35,
-                drawRadius * 0.1,
-                node.x,
-                node.y,
-                drawRadius
-            );
-            nodeGrad.addColorStop(0, '#ffffff');
-            nodeGrad.addColorStop(0.18, color);
-            nodeGrad.addColorStop(1, '#020617');
-            ctx.fillStyle = nodeGrad;
+            if (performanceProfile.isAndroid) {
+                ctx.fillStyle = color;
+            } else {
+                const nodeGrad = ctx.createRadialGradient(
+                    node.x - drawRadius * 0.3,
+                    node.y - drawRadius * 0.35,
+                    drawRadius * 0.1,
+                    node.x,
+                    node.y,
+                    drawRadius
+                );
+                nodeGrad.addColorStop(0, '#ffffff');
+                nodeGrad.addColorStop(0.18, color);
+                nodeGrad.addColorStop(1, '#020617');
+                ctx.fillStyle = nodeGrad;
+            }
             ctx.fill();
 
             // ── RESİM (clip ile daireye sığdır) ──
@@ -479,12 +492,14 @@ function initGraph(data) {
             ctx.lineWidth = isCenter ? 3.2 / globalScale : 1.7 / globalScale;
             ctx.stroke();
 
-            const shineAngle = sceneTime * 2.2 + nodePhase;
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, drawRadius * 1.08, shineAngle, shineAngle + Math.PI * 0.55);
-            ctx.strokeStyle = 'rgba(255,255,255,0.82)';
-            ctx.lineWidth = 1.8 / globalScale;
-            ctx.stroke();
+            if (performanceProfile.animatedNodeEffects) {
+                const shineAngle = sceneTime * 2.2 + nodePhase;
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, drawRadius * 1.08, shineAngle, shineAngle + Math.PI * 0.55);
+                ctx.strokeStyle = 'rgba(255,255,255,0.82)';
+                ctx.lineWidth = 1.8 / globalScale;
+                ctx.stroke();
+            }
 
             // ── YAZI ──
             const fontSize = Math.max((isCenter ? 17 : 15) / globalScale, isCenter ? 8 : 6.5);
@@ -521,7 +536,7 @@ function initGraph(data) {
 
             // Yazı gölgesi
             ctx.shadowColor = color;
-            ctx.shadowBlur = isCenter ? 14 : 8;
+            ctx.shadowBlur = performanceProfile.isAndroid ? 0 : (isCenter ? 14 : 8);
             ctx.fillStyle = '#f8fafc';
             ctx.fillText(label, node.x, labelY);
             ctx.shadowBlur = 0;
@@ -540,16 +555,17 @@ function initGraph(data) {
         graph.pixelRatio(performanceProfile.graphPixelRatio);
     }
 
-    graph.d3Force('charge').strength(performanceProfile.isAndroid ? -260 : -360);
+    graph.d3Force('charge').strength(performanceProfile.isAndroid ? -180 : -360);
     graph.d3Force('link').distance(link => {
         const baseDistance = link.label ? 145 : 118;
-        return performanceProfile.isAndroid ? baseDistance * 0.9 : baseDistance;
+        return performanceProfile.isAndroid ? baseDistance * 0.78 : baseDistance;
     });
 
     if (performanceProfile.isAndroid) {
-        if (typeof graph.d3AlphaDecay === 'function') graph.d3AlphaDecay(0.045);
-        if (typeof graph.d3VelocityDecay === 'function') graph.d3VelocityDecay(0.42);
-        if (typeof graph.cooldownTicks === 'function') graph.cooldownTicks(90);
+        if (typeof graph.autoPauseRedraw === 'function') graph.autoPauseRedraw(true);
+        if (typeof graph.d3AlphaDecay === 'function') graph.d3AlphaDecay(0.08);
+        if (typeof graph.d3VelocityDecay === 'function') graph.d3VelocityDecay(0.58);
+        if (typeof graph.cooldownTicks === 'function') graph.cooldownTicks(35);
     }
 
     setTimeout(() => {
