@@ -56,6 +56,28 @@
     </div>
 
     <button id="open-panel-btn" class="hint-button">Haritayı İncele</button>
+    <button id="explorer-btn" class="explorer-button" title="3D Uzay Modu - WASD ile gez">🚀 3D Gez</button>
+
+    <!-- 3D Explorer overlay -->
+    <div id="explorer-overlay" class="explorer-overlay hidden">
+        <canvas id="explorer-canvas"></canvas>
+        <div class="explorer-hud">
+            <div class="explorer-hud-top">
+                <button id="explorer-close" class="explorer-close-btn">✕ Çık</button>
+                <div class="explorer-title">3D UZAY MODU</div>
+                <div class="explorer-controls-hint">
+                    <span>W A S D</span> hareket &nbsp;|&nbsp;
+                    <span>Fare</span> bakış &nbsp;|&nbsp;
+                    <span>Düğüme Tıkla</span> bilgi
+                </div>
+            </div>
+            <div id="explorer-info" class="explorer-node-info hidden">
+                <span id="explorer-node-name"></span>
+                <p id="explorer-node-desc"></p>
+            </div>
+            <div class="explorer-crosshair">+</div>
+        </div>
+    </div>
 
     <script defer src="script/app.js"></script>
 </body>

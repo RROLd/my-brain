@@ -812,9 +812,367 @@ function preparePanelContent(node) {
     panel.classList.remove('open');
 }
 
-// ── BUTON OLAYLARI ────────────────────────────────────────────
-closeBtn.addEventListener('click', () => panel.classList.remove('open'));
 
-openPanelBtn.addEventListener('click', () => {
-    if (currentSelectedNode) panel.classList.add('open');
-});
+// ── 3D EXPLORER MODU ─────────────────────────────────────────
+(function () {
+    const explorerBtn    = document.getElementById('explorer-btn');
+    const explorerOverlay= document.getElementById('explorer-overlay');
+    const explorerClose  = document.getElementById('explorer-close');
+    const explorerCanvas = document.getElementById('explorer-canvas');
+    const explorerInfo   = document.getElementById('explorer-info');
+    const explorerNodeName = document.getElementById('explorer-node-name');
+    const explorerNodeDesc = document.getElementById('explorer-node-desc');
+
+    let explorerActive = false;
+    let animId = null;
+    let pointerLocked = false;
+
+    // Kamera durumu
+    const cam = {
+        x: 0, y: 0, z: 300,
+        yaw: 0, pitch: 0,
+        speed: 80
+    };
+    const keys = {};
+
+    // Düğüm 3D konumları (haritadan al, z rastgele dağıt)
+    let nodes3D = [];
+    let links3D = [];
+
+    function buildScene() {
+        nodes3D = graphData.nodes.map(n => {
+            const target = getClusterTarget(n);
+            return {
+                ...n,
+                x3: (target.x || 0) * 2.2,
+                y3: -(target.y || 0) * 2.2,
+                z3: (Math.random() - 0.5) * 320,
+                radius: Math.sqrt(n.val) * 14
+            };
+        });
+
+        links3D = graphData.links.map(l => ({
+            source: typeof l.source === 'object' ? l.source.id : l.source,
+            target: typeof l.target === 'object' ? l.target.id : l.target,
+            label: l.label
+        }));
+    }
+
+    // ── Canvas renderer ──────────────────────────────────────
+    let W, H;
+    const ctx3 = explorerCanvas.getContext('2d');
+    let fov = 600;
+
+    function resize() {
+        W = explorerCanvas.width  = window.innerWidth;
+        H = explorerCanvas.height = window.innerHeight;
+        fov = Math.min(W, H) * 0.95;
+    }
+
+    function project(x, y, z) {
+        // Kamera dönüşümü: yaw (y ekseni), pitch (x ekseni)
+        const cosY = Math.cos(cam.yaw), sinY = Math.sin(cam.yaw);
+        const cosP = Math.cos(cam.pitch), sinP = Math.sin(cam.pitch);
+
+        const dx = x - cam.x, dy = y - cam.y, dz = z - cam.z;
+
+        // Yaw (sol-sağ)
+        const rx = dx * cosY - dz * sinY;
+        const ry = dy;
+        const rz = dx * sinY + dz * cosY;
+
+        // Pitch (yukarı-aşağı)
+        const ry2 = ry * cosP - rz * sinP;
+        const rz2 = ry * sinP + rz * cosP;
+
+        if (rz2 >= -1) return null; // arkamızda
+        const scale = fov / -rz2;
+        return {
+            sx: W / 2 + rx * scale,
+            sy: H / 2 + ry2 * scale,
+            scale,
+            depth: -rz2
+        };
+    }
+
+    function renderExplorer(dt) {
+        ctx3.clearRect(0, 0, W, H);
+
+        // Arka plan
+        ctx3.fillStyle = '#030712';
+        ctx3.fillRect(0, 0, W, H);
+
+        // Yıldızlar (statik, arka plan)
+        ctx3.save();
+        ctx3.fillStyle = 'rgba(148,163,184,0.28)';
+        for (let i = 0; i < 200; i++) {
+            // deterministik "yıldız" konumlar
+            const sx = ((i * 2973.41) % W);
+            const sy = ((i * 1847.13) % H);
+            const sr = ((i * 0.37) % 1.4) + 0.3;
+            ctx3.beginPath();
+            ctx3.arc(sx, sy, sr, 0, Math.PI * 2);
+            ctx3.fill();
+        }
+        ctx3.restore();
+
+        // Bağları çiz (arkadan öne sırala)
+        for (const link of links3D) {
+            const sNode = nodes3D.find(n => n.id === link.source);
+            const tNode = nodes3D.find(n => n.id === link.target);
+            if (!sNode || !tNode) continue;
+
+            const ps = project(sNode.x3, sNode.y3, sNode.z3);
+            const pt = project(tNode.x3, tNode.y3, tNode.z3);
+            if (!ps || !pt) continue;
+
+            const sColor = groupColors[sNode.group] || '#38bdf8';
+            const avgDepth = (ps.depth + pt.depth) / 2;
+            const alpha = Math.min(0.55, 120 / avgDepth);
+
+            ctx3.save();
+            ctx3.beginPath();
+            ctx3.moveTo(ps.sx, ps.sy);
+            ctx3.lineTo(pt.sx, pt.sy);
+            ctx3.strokeStyle = link.label
+                ? `${sColor}${Math.round(alpha * 255).toString(16).padStart(2,'0')}`
+                : `rgba(148,163,184,${alpha * 0.55})`;
+            ctx3.lineWidth = link.label ? Math.max(1, 2.5 * Math.min(ps.scale, pt.scale) * 0.18) : Math.max(0.5, 1.2);
+            ctx3.stroke();
+            ctx3.restore();
+        }
+
+        // Düğümleri derinliğe göre sırala (uzak önce)
+        const sorted = nodes3D
+            .map(n => ({ n, proj: project(n.x3, n.y3, n.z3) }))
+            .filter(o => o.proj !== null)
+            .sort((a, b) => b.proj.depth - a.proj.depth);
+
+        const now = performance.now() * 0.001;
+
+        for (const { n, proj } of sorted) {
+            const { sx, sy, scale, depth } = proj;
+            const color = groupColors[n.group] || '#ffffff';
+            const r = Math.max(8, n.radius * scale * 0.14);
+            const alpha = Math.min(1, 280 / depth);
+
+            ctx3.save();
+            ctx3.globalAlpha = alpha;
+
+            // Glow
+            const glow = ctx3.createRadialGradient(sx, sy, r * 0.2, sx, sy, r * 2.2);
+            glow.addColorStop(0, `${color}44`);
+            glow.addColorStop(1, `${color}00`);
+            ctx3.beginPath();
+            ctx3.arc(sx, sy, r * 2.2, 0, Math.PI * 2);
+            ctx3.fillStyle = glow;
+            ctx3.fill();
+
+            // Daire gövdesi
+            const nodeGrad = ctx3.createRadialGradient(sx - r * 0.3, sy - r * 0.35, r * 0.1, sx, sy, r);
+            nodeGrad.addColorStop(0, '#ffffff');
+            nodeGrad.addColorStop(0.22, color);
+            nodeGrad.addColorStop(1, '#020617');
+            ctx3.beginPath();
+            ctx3.arc(sx, sy, r, 0, Math.PI * 2);
+            ctx3.fillStyle = nodeGrad;
+            ctx3.fill();
+
+            // İmaj (billboard — daireye sığdır)
+            if (n.img) {
+                const img = imageCache[n.img];
+                if (img && img.complete && img.naturalWidth > 0) {
+                    ctx3.save();
+                    ctx3.beginPath();
+                    ctx3.arc(sx, sy, r, 0, Math.PI * 2);
+                    ctx3.clip();
+                    ctx3.drawImage(img, sx - r, sy - r, r * 2, r * 2);
+                    ctx3.restore();
+                }
+            }
+
+            // Çerçeve + parlama şeridi
+            ctx3.beginPath();
+            ctx3.arc(sx, sy, r, 0, Math.PI * 2);
+            ctx3.strokeStyle = n.group === 'merkez' ? 'rgba(34,211,238,0.95)' : `${color}cc`;
+            ctx3.lineWidth = n.group === 'merkez' ? 3 : 1.5;
+            ctx3.stroke();
+
+            const shineAngle = now * 2.2 + [...n.id].reduce((s, c) => s + c.charCodeAt(0), 0) * 0.03;
+            ctx3.beginPath();
+            ctx3.arc(sx, sy, r * 1.08, shineAngle, shineAngle + Math.PI * 0.55);
+            ctx3.strokeStyle = 'rgba(255,255,255,0.72)';
+            ctx3.lineWidth = 1.4;
+            ctx3.stroke();
+
+            // Etiket — billboard (her zaman ekrana dönük, yani sadece 2D yaz)
+            const fontSize = Math.max(11, Math.min(20, r * 0.9));
+            ctx3.font = `800 ${fontSize}px 'Plus Jakarta Sans', sans-serif`;
+            ctx3.textAlign = 'center';
+            ctx3.textBaseline = 'middle';
+            const labelY = sy + r + fontSize * 1.15;
+            const lw = ctx3.measureText(n.name).width;
+            const lp = 8, lph = 5;
+
+            ctx3.fillStyle = 'rgba(2,6,23,0.86)';
+            ctx3.beginPath();
+            ctx3.roundRect(sx - lw / 2 - lp, labelY - fontSize / 2 - lph, lw + lp * 2, fontSize + lph * 2, 5);
+            ctx3.fill();
+            ctx3.strokeStyle = `${color}55`;
+            ctx3.lineWidth = 1;
+            ctx3.stroke();
+
+            ctx3.fillStyle = '#f8fafc';
+            ctx3.shadowColor = color;
+            ctx3.shadowBlur = 8;
+            ctx3.fillText(n.name, sx, labelY);
+            ctx3.shadowBlur = 0;
+
+            ctx3.restore();
+        }
+    }
+
+    // ── WASD hareketi ────────────────────────────────────────
+    function moveCamera(dt) {
+        const speed = cam.speed * dt;
+        const cosY = Math.cos(cam.yaw), sinY = Math.sin(cam.yaw);
+
+        if (keys['w'] || keys['arrowup']) {
+            cam.x -= sinY * speed;
+            cam.z -= cosY * speed;
+        }
+        if (keys['s'] || keys['arrowdown']) {
+            cam.x += sinY * speed;
+            cam.z += cosY * speed;
+        }
+        if (keys['a'] || keys['arrowleft']) {
+            cam.x -= cosY * speed;
+            cam.z += sinY * speed;
+        }
+        if (keys['d'] || keys['arrowright']) {
+            cam.x += cosY * speed;
+            cam.z -= sinY * speed;
+        }
+        if (keys['q'] || keys['shift']) cam.y += speed;
+        if (keys['e'] || keys[' '])    cam.y -= speed;
+    }
+
+    let lastTime = 0;
+    function loop(time) {
+        if (!explorerActive) return;
+        const dt = Math.min((time - lastTime) / 1000, 0.05);
+        lastTime = time;
+        moveCamera(dt);
+        renderExplorer(dt);
+        animId = requestAnimationFrame(loop);
+    }
+
+    // ── Pointer Lock fare bakış açısı ────────────────────────
+    function onMouseMove(e) {
+        if (!pointerLocked) return;
+        const sens = 0.0018;
+        cam.yaw   += e.movementX * sens;
+        cam.pitch  = Math.max(-Math.PI / 2 + 0.05, Math.min(Math.PI / 2 - 0.05, cam.pitch + e.movementY * sens));
+    }
+
+    function onPointerLockChange() {
+        pointerLocked = document.pointerLockElement === explorerCanvas;
+    }
+
+    explorerCanvas.addEventListener('click', () => {
+        explorerCanvas.requestPointerLock();
+    });
+
+    document.addEventListener('pointerlockchange', onPointerLockChange);
+    document.addEventListener('mousemove', onMouseMove);
+
+    // Düğüme tıklama (pointer lock olmadan tıklama)
+    explorerCanvas.addEventListener('click', (e) => {
+        if (pointerLocked) return;
+        const rect = explorerCanvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+
+        let closest = null, closestDist = 40;
+        for (const n of nodes3D) {
+            const proj = project(n.x3, n.y3, n.z3);
+            if (!proj) continue;
+            const r = Math.max(8, n.radius * proj.scale * 0.14);
+            const dist = Math.hypot(proj.sx - mx, proj.sy - my);
+            if (dist < r + 12 && dist < closestDist) {
+                closestDist = dist;
+                closest = n;
+            }
+        }
+
+        if (closest) {
+            explorerNodeName.textContent = closest.name;
+            explorerNodeDesc.textContent  = closest.desc;
+            explorerInfo.classList.remove('hidden');
+            setTimeout(() => explorerInfo.classList.add('hidden'), 6000);
+        }
+    });
+
+    // Ortada crosshair tıklaması (pointer lock modunda bakılan düğüm)
+    document.addEventListener('mousedown', (e) => {
+        if (!pointerLocked || !explorerActive) return;
+        const center = { sx: W / 2, sy: H / 2 };
+        let closest = null, closestDist = 60;
+        for (const n of nodes3D) {
+            const proj = project(n.x3, n.y3, n.z3);
+            if (!proj) continue;
+            const r = Math.max(8, n.radius * proj.scale * 0.14);
+            const dist = Math.hypot(proj.sx - center.sx, proj.sy - center.sy);
+            if (dist < r + 20 && dist < closestDist) {
+                closestDist = dist;
+                closest = n;
+            }
+        }
+        if (closest) {
+            explorerNodeName.textContent = closest.name;
+            explorerNodeDesc.textContent  = closest.desc;
+            explorerInfo.classList.remove('hidden');
+            setTimeout(() => explorerInfo.classList.add('hidden'), 6000);
+        }
+    });
+
+    // Klavye
+    window.addEventListener('keydown', e => {
+        if (!explorerActive) return;
+        keys[e.key.toLowerCase()] = true;
+        if (e.key === 'Escape') closeExplorer();
+    });
+    window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+
+    // ── Aç / kapat ───────────────────────────────────────────
+    function openExplorer() {
+        buildScene();
+        // Kamerayı merkez düğümünün önüne yerleştir
+        const center = nodes3D.find(n => n.id === 'Merkez');
+        if (center) {
+            cam.x = center.x3; cam.y = center.y3; cam.z = center.z3 + 220;
+        } else {
+            cam.x = 0; cam.y = 0; cam.z = 300;
+        }
+        cam.yaw = 0; cam.pitch = 0;
+
+        explorerOverlay.classList.remove('hidden');
+        explorerActive = true;
+        resize();
+        lastTime = performance.now();
+        animId = requestAnimationFrame(loop);
+    }
+
+    function closeExplorer() {
+        explorerActive = false;
+        explorerOverlay.classList.add('hidden');
+        if (animId) cancelAnimationFrame(animId);
+        if (document.pointerLockElement) document.exitPointerLock();
+        Object.keys(keys).forEach(k => delete keys[k]);
+        explorerInfo.classList.add('hidden');
+    }
+
+    explorerBtn.addEventListener('click', openExplorer);
+    explorerClose.addEventListener('click', closeExplorer);
+    window.addEventListener('resize', () => { if (explorerActive) resize(); });
+})();

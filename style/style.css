@@ -602,6 +602,187 @@ body::before {
     }
 }
 
+/* ── 3D EXPLORER ────────────────────────────────────────────── */
+.explorer-button {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    z-index: 13;
+    padding: 12px 20px;
+    border: 1px solid rgba(34, 211, 238, 0.45);
+    border-radius: 8px;
+    background: rgba(5, 10, 25, 0.72);
+    color: var(--cyan);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    backdrop-filter: blur(14px);
+    box-shadow: 0 0 24px rgba(34, 211, 238, 0.18), inset 0 1px 0 rgba(255,255,255,0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.explorer-button:hover {
+    transform: translateY(-2px);
+    border-color: rgba(34, 211, 238, 0.8);
+    box-shadow: 0 0 38px rgba(34, 211, 238, 0.34);
+    color: #fff;
+}
+
+.explorer-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: #030712;
+}
+
+.explorer-overlay.hidden {
+    display: none;
+}
+
+#explorer-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: none;
+}
+
+.explorer-overlay.pointer-locked #explorer-canvas {
+    cursor: none;
+}
+
+.explorer-hud {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.explorer-hud-top {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 24px;
+    pointer-events: auto;
+    background: linear-gradient(180deg, rgba(3,7,18,0.82) 0%, transparent 100%);
+}
+
+.explorer-close-btn {
+    padding: 8px 16px;
+    border: 1px solid rgba(226,232,240,0.2);
+    border-radius: 6px;
+    background: rgba(15,23,42,0.72);
+    color: #cbd5e1;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.18s, border-color 0.18s;
+    flex-shrink: 0;
+}
+
+.explorer-close-btn:hover {
+    background: rgba(251,113,133,0.18);
+    border-color: rgba(251,113,133,0.5);
+    color: white;
+}
+
+.explorer-title {
+    color: var(--cyan);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-shadow: 0 0 18px rgba(34,211,238,0.6);
+    flex: 1;
+}
+
+.explorer-controls-hint {
+    color: #8fa1b9;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+.explorer-controls-hint span {
+    color: var(--cyan);
+    font-weight: 800;
+    padding: 2px 7px;
+    border: 1px solid rgba(34,211,238,0.35);
+    border-radius: 4px;
+    background: rgba(34,211,238,0.07);
+}
+
+.explorer-crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: rgba(34,211,238,0.72);
+    font-size: 1.6rem;
+    font-weight: 300;
+    line-height: 1;
+    text-shadow: 0 0 12px rgba(34,211,238,0.8);
+    pointer-events: none;
+    user-select: none;
+}
+
+.explorer-node-info {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(480px, calc(100% - 48px));
+    padding: 20px 24px;
+    border: 1px solid rgba(34,211,238,0.28);
+    border-radius: 10px;
+    background: rgba(3,7,18,0.82);
+    backdrop-filter: blur(20px);
+    pointer-events: none;
+    text-align: center;
+    animation: explorerInfoIn 0.3s cubic-bezier(0.16,1,0.3,1);
+}
+
+.explorer-node-info.hidden {
+    display: none;
+}
+
+.explorer-node-info span {
+    display: block;
+    color: var(--cyan);
+    font-size: 1.05rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.explorer-node-info p {
+    color: #c4d4e8;
+    font-size: 0.88rem;
+    line-height: 1.65;
+    margin: 0;
+}
+
+@keyframes explorerInfoIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@media (max-width: 768px) {
+    .explorer-button {
+        top: auto;
+        bottom: 70px;
+        right: 16px;
+        font-size: 0.8rem;
+        padding: 10px 14px;
+    }
+    .explorer-controls-hint {
+        display: none;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
