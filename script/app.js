@@ -555,7 +555,7 @@ function initGraph(data) {
                 ctx.stroke();
             }
 
-            drawNodeAura(ctx, drawX, drawY, drawRadius, color, globalScale, nodePhase, isCenter);
+            // drawNodeAura kaldırıldı — performans için
 
             // ── DÜĞÜM DAİRESİ ──
             ctx.save();
@@ -580,13 +580,10 @@ function initGraph(data) {
                 const img = imageCache[node.img];
                 if (img && img.complete && img.naturalWidth > 0) {
                     ctx.clip();
-                    const imageSpin = Math.sin(sceneTime * 0.28 + nodePhase) * 0.01;
                     ctx.translate(drawX, drawY);
-                    ctx.rotate(imageSpin);
                     ctx.drawImage(img, -drawRadius, -drawRadius, drawRadius * 2, drawRadius * 2);
-                    ctx.rotate(-imageSpin);
                     ctx.translate(-drawX, -drawY);
-                    drawHologramScan(ctx, drawX, drawY, drawRadius, color, nodePhase);
+                    // drawHologramScan kaldırıldı — performans için
                 }
             }
             ctx.restore();
@@ -598,12 +595,7 @@ function initGraph(data) {
             ctx.lineWidth = isCenter ? 3.2 / globalScale : 1.7 / globalScale;
             ctx.stroke();
 
-            const shineAngle = sceneTime * 2.2 + nodePhase;
-            ctx.beginPath();
-            ctx.arc(drawX, drawY, drawRadius * 1.08, shineAngle, shineAngle + Math.PI * 0.55);
-            ctx.strokeStyle = 'rgba(255,255,255,0.82)';
-            ctx.lineWidth = 1.8 / globalScale;
-            ctx.stroke();
+            // Dönen shine yayı kaldırıldı — performans için
 
             // ── YAZI ──
             const fontSize = Math.max((isCenter ? 18 : 15.5) / globalScale, isCenter ? 8.5 : 7);

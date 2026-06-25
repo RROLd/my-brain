@@ -308,7 +308,6 @@ body::before {
     border: 3px solid rgba(34, 211, 238, 0.58);
     background: rgba(15, 23, 42, 0.78);
     box-shadow: 0 0 30px rgba(34, 211, 238, 0.26);
-    animation: avatarFloat 7s ease-in-out infinite;
 }
 
 .panel-avatar-wrap::after {
@@ -317,7 +316,6 @@ body::before {
     inset: -8px;
     border-radius: inherit;
     border: 1px solid rgba(255, 255, 255, 0.22);
-    animation: avatarOrbit 9s linear infinite;
 }
 
 .panel-avatar-wrap::before {
@@ -330,9 +328,7 @@ body::before {
         linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.48) 48%, transparent 54%),
         repeating-linear-gradient(180deg, transparent 0 7px, rgba(255, 255, 255, 0.08) 8px 9px);
     mix-blend-mode: screen;
-    opacity: 0.62;
-    transform: translateY(-120%);
-    animation: avatarScan 2.7s ease-in-out infinite;
+    opacity: 0;
 }
 
 .panel-avatar-wrap img {
